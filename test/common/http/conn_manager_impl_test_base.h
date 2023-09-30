@@ -142,6 +142,8 @@ public:
   }
   const LocalReply::LocalReply& localReply() const override { return *local_reply_; }
 
+  Event::MockSchedulableCallback* enableStreamsPerIoLimit(uint32_t limit);
+
   Envoy::Event::SimulatedTimeSystem test_time_;
   NiceMock<Router::MockRouteConfigProvider> route_config_provider_;
   std::shared_ptr<Router::MockConfig> route_config_{new NiceMock<Router::MockConfig>()};

@@ -69,6 +69,7 @@ void HttpConnectionManagerImplTest::setup(bool ssl, const std::string& server_na
   conn_manager_ = std::make_unique<ConnectionManagerImpl>(
       *this, drain_close_, random_, http_context_, runtime_, local_info_, cluster_manager_,
       overload_manager_, test_time_.timeSystem());
+
   conn_manager_->initializeReadFilterCallbacks(filter_callbacks_);
 
   if (tracing) {
@@ -259,6 +260,24 @@ void HttpConnectionManagerImplTest::doRemoteClose(bool deferred) {
   EXPECT_CALL(stream_, removeCallbacks(_));
   expectOnDestroy(deferred);
   filter_callbacks_.connection_.raiseEvent(Network::ConnectionEvent::RemoteClose);
+}
+
+Event::MockSchedulableCallback*
+HttpConnectionManagerImplTest::enableStreamsPerIoLimit(uint32_t limit) {
+  EXPECT_CALL(runtime_.snapshot_, getInteger("http.max_requests_per_io_cycle", _))
+      .WillOnce(Return(limit));
+
+  // Expect HCM to create and set schedulable callback
+  auto* deferred_request_callback =
+      new Event::MockSchedulableCallback(&filter_callbacks_.connection_.dispatcher_);
+  EXPECT_CALL(*deferred_request_callback, enabled())
+      .WillRepeatedly(
+          Invoke([deferred_request_callback]() { return deferred_request_callback->enabled_; }));
+  EXPECT_CALL(*deferred_request_callback, scheduleCallbackNextIteration())
+      .WillRepeatedly(
+          Invoke([deferred_request_callback]() { deferred_request_callback->enabled_ = true; }));
+
+  return deferred_request_callback;
 }
 
 } // namespace Http

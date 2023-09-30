@@ -325,7 +325,11 @@ Http2Frame Http2Frame::makeRequest(uint32_t stream_index, absl::string_view host
                     makeNetworkOrderStreamId(stream_index));
   frame.appendStaticHeader(StaticHeaderIndex::MethodGet);
   frame.appendStaticHeader(StaticHeaderIndex::SchemeHttps);
-  frame.appendHeaderWithoutIndexing(StaticHeaderIndex::Path, path);
+  if (path.empty() || path == "/") {
+    frame.appendStaticHeader(StaticHeaderIndex::Path);
+  } else {
+    frame.appendHeaderWithoutIndexing(StaticHeaderIndex::Path, path);
+  }
   frame.appendHeaderWithoutIndexing(StaticHeaderIndex::Host, host);
   frame.adjustPayloadSize();
   return frame;
@@ -349,7 +353,11 @@ Http2Frame Http2Frame::makePostRequest(uint32_t stream_index, absl::string_view 
                     makeNetworkOrderStreamId(stream_index));
   frame.appendStaticHeader(StaticHeaderIndex::MethodPost);
   frame.appendStaticHeader(StaticHeaderIndex::SchemeHttps);
-  frame.appendHeaderWithoutIndexing(StaticHeaderIndex::Path, path);
+  if (path.empty() || path == "/") {
+    frame.appendStaticHeader(StaticHeaderIndex::Path);
+  } else {
+    frame.appendHeaderWithoutIndexing(StaticHeaderIndex::Path, path);
+  }
   frame.appendHeaderWithoutIndexing(StaticHeaderIndex::Host, host);
   frame.adjustPayloadSize();
   return frame;
